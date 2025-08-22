@@ -21,6 +21,7 @@ config.yaml
 .env
 __azurite*
 .python_packages/
+.claude
 
 *.user
 *.suo

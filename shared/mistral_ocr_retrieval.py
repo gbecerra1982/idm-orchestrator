@@ -1,6 +1,7 @@
 """
-Mistral OCR Integration for Enhanced Table Retrieval
-Leverages Mistral's Pixtral model for advanced table understanding during retrieval
+Mistral OCR Integration for Enhanced Table Retrieval via Azure AI Foundry
+Leverages Mistral's OCR model (mistral-ocr-2503) for advanced table understanding during retrieval
+Based on: https://github.com/azure-ai-foundry/foundry-samples/blob/main/samples/mistral/python/mistral-ocr-with-vlm.ipynb
 Focus: Improving retrieval quality through better table comprehension
 """
 import os
@@ -33,15 +34,22 @@ class MistralOCRTableAnalyzer:
     """
     
     def __init__(self):
-        """Initialize Mistral OCR analyzer for retrieval enhancement."""
-        self.api_key = os.getenv("MISTRAL_API_KEY")
-        self.endpoint = os.getenv("MISTRAL_ENDPOINT", "https://api.mistral.ai/v1/chat/completions")
-        self.model = os.getenv("MISTRAL_MODEL", "pixtral-12b-2024-09-01")
+        """Initialize Mistral OCR analyzer for retrieval enhancement using Azure AI Foundry."""
+        # Azure AI Foundry OCR endpoint configuration
+        self.ocr_endpoint = os.getenv("AZURE_MISTRAL_OCR_ENDPOINT")
+        self.ocr_api_key = os.getenv("AZURE_MISTRAL_OCR_API_KEY")
+        self.ocr_model = os.getenv("MISTRAL_OCR_MODEL", "mistral-ocr-2503")
+        
+        # Optional: Small language model for additional processing
+        self.small_endpoint = os.getenv("AZURE_MISTRAL_SMALL_ENDPOINT")
+        self.small_api_key = os.getenv("AZURE_MISTRAL_SMALL_API_KEY")
+        self.small_model = os.getenv("MISTRAL_SMALL_MODEL", "mistral-small-2503")
+        
         self.enabled = os.getenv("ENABLE_MISTRAL_OCR", "false").lower() == "true"
         self.logger = logging.getLogger(__name__)
         
-        if self.enabled and not self.api_key:
-            self.logger.warning("Mistral OCR enabled but API key not configured")
+        if self.enabled and not (self.ocr_endpoint and self.ocr_api_key):
+            self.logger.warning("Mistral OCR enabled but Azure AI Foundry endpoints not configured")
             self.enabled = False
     
     async def analyze_table_for_retrieval(self, 
@@ -159,8 +167,9 @@ Focus on information that would help answer the query accurately."""
             API response or None
         """
         headers = {
-            "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json"
+            "Authorization": f"Bearer {self.ocr_api_key}",
+            "Content-Type": "application/json",
+            "api-key": self.ocr_api_key  # Azure AI Foundry specific header
         }
         
         # Determine if image is URL or base64
@@ -173,7 +182,7 @@ Focus on information that would help answer the query accurately."""
             image_content = {"type": "image_url", "image_url": {"url": image}}
         
         payload = {
-            "model": self.model,
+            "model": self.ocr_model,
             "messages": [
                 {
                     "role": "user",
@@ -190,7 +199,7 @@ Focus on information that would help answer the query accurately."""
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.post(
-                    self.endpoint,
+                    self.ocr_endpoint,
                     headers=headers,
                     json=payload,
                     timeout=aiohttp.ClientTimeout(total=30)

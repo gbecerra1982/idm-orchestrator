@@ -4,9 +4,9 @@
 
 Esta guía detalla el procedimiento paso a paso para implementar las mejoras en el sistema de retrieval del Orchestrator IDM, específicamente optimizado para el procesamiento de tablas complejas con headers jerárquicos, celdas fusionadas y estructuras sin bordes.
 
-### 🚀 Nueva Integración: Mistral OCR (Pixtral)
+### Nueva Integración: Mistral OCR via Azure AI Foundry
 
-La integración con **Mistral OCR** representa un salto cualitativo en la comprensión semántica de tablas complejas:
+La integración con **Mistral OCR a través de Azure AI Foundry** representa un salto cualitativo en la comprensión semántica de tablas complejas:
 
 - **Análisis Multimodal**: Procesa hasta 2000 páginas/minuto con 96.12% de precisión en tablas
 - **Comprensión Profunda**: Identifica relaciones implícitas, patrones ocultos y contexto semántico
@@ -81,7 +81,7 @@ La integración con **Mistral OCR** representa un salto cualitativo en la compre
 **Nota**: Este archivo fue creado pero NO debe usarse ya que el chunking es para ingesta, no para retrieval.
 
 ### 11. `shared/mistral_ocr_retrieval.py` (NUEVO - DIFERENCIADOR CLAVE)
-**Propósito**: Integración con Mistral OCR (Pixtral) para análisis semántico avanzado de tablas.
+**Propósito**: Integración con Mistral OCR via Azure AI Foundry para análisis semántico avanzado de tablas.
 
 **Capacidades Únicas**:
 - `MistralOCRTableAnalyzer`: 
@@ -109,6 +109,77 @@ La integración con **Mistral OCR** representa un salto cualitativo en la compre
 
 ## Procedimiento de Implementación Paso a Paso
 
+### Fase 0: Configuración de Mistral OCR con Azure AI Foundry (RECOMENDADO)
+
+#### Prerrequisitos para Mistral OCR
+1. **Cuenta de Azure AI Foundry** con acceso a modelos Mistral
+2. **Recurso de Azure OpenAI** o Azure AI Services configurado
+3. **API Keys** generadas para los endpoints
+
+#### Procedimiento de Configuración de Azure AI Foundry para Mistral
+
+##### 1. Crear Recurso en Azure Portal
+```bash
+# Acceder a Azure Portal
+# Crear nuevo recurso: Azure AI Services o Azure OpenAI Service
+# Región recomendada: East US o West Europe
+```
+
+##### 2. Desplegar Modelos Mistral
+```bash
+# En Azure AI Foundry Studio:
+1. Navegar a "Model deployments"
+2. Seleccionar "Deploy model" > "Deploy base model"
+3. Buscar y seleccionar:
+   - mistral-ocr-2503 (para análisis de tablas)
+   - mistral-small-2503 (opcional, para procesamiento adicional)
+4. Configurar deployment name y completar despliegue
+```
+
+##### 3. Obtener Endpoints y API Keys
+```bash
+# En Azure AI Foundry Studio:
+1. Ir a "Deployments" > Seleccionar tu modelo
+2. Copiar:
+   - Endpoint URL (ejemplo: https://myresource.openai.azure.com)
+   - API Key desde "Keys and Endpoint"
+```
+
+##### 4. Configurar Variables de Entorno
+```bash
+# Configurar en .env o variables del sistema:
+AZURE_MISTRAL_OCR_ENDPOINT=https://[tu-recurso].openai.azure.com/v1/ocr
+AZURE_MISTRAL_OCR_API_KEY=[tu-api-key]
+MISTRAL_OCR_MODEL=mistral-ocr-2503
+
+# Opcional para procesamiento adicional:
+AZURE_MISTRAL_SMALL_ENDPOINT=https://[tu-recurso].openai.azure.com/v1/chat/completions
+AZURE_MISTRAL_SMALL_API_KEY=[tu-api-key]
+MISTRAL_SMALL_MODEL=mistral-small-2503
+```
+
+##### 5. Verificar Conectividad
+```python
+# Script de verificación
+import requests
+
+headers = {
+    "Authorization": f"Bearer {YOUR_API_KEY}",
+    "api-key": YOUR_API_KEY,
+    "Content-Type": "application/json"
+}
+
+response = requests.get(
+    f"{YOUR_ENDPOINT}/models",
+    headers=headers
+)
+
+if response.status_code == 200:
+    print("Conexión exitosa con Azure AI Foundry")
+else:
+    print(f"Error: {response.status_code}")
+```
+
 ### Fase 1: Preparación del Entorno
 
 #### Paso 1.1: Configurar Variables de Entorno
@@ -133,12 +204,23 @@ ENABLE_DOCUMENT_INTELLIGENCE=false
 AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT=https://[your-service].cognitiveservices.azure.com
 AZURE_DOCUMENT_INTELLIGENCE_KEY=[your-api-key]
 
-# Mistral OCR (RECOMENDADO para tablas complejas)
+# Mistral OCR con Azure AI Foundry (RECOMENDADO para tablas complejas)
+# Documentación: https://github.com/azure-ai-foundry/foundry-samples/blob/main/samples/mistral/python/mistral-ocr-with-vlm.ipynb
 ENABLE_MISTRAL_OCR=false  # Cambiar a true para habilitar
-MISTRAL_API_KEY=[your-mistral-api-key]
-MISTRAL_MODEL=pixtral-12b-2024-09-01
+
+# Endpoints de Azure AI Foundry
+AZURE_MISTRAL_OCR_ENDPOINT=https://[your-resource].openai.azure.com/v1/ocr
+AZURE_MISTRAL_OCR_API_KEY=[your-azure-ai-foundry-api-key]
+MISTRAL_OCR_MODEL=mistral-ocr-2503
+
+# Configuración adicional
 MISTRAL_USE_FOR_COMPLEX=true
 MISTRAL_CONFIDENCE_THRESHOLD=0.5
+
+# Opcional: Modelo de lenguaje pequeño para procesamiento adicional
+AZURE_MISTRAL_SMALL_ENDPOINT=https://[your-resource].openai.azure.com/v1/chat/completions
+AZURE_MISTRAL_SMALL_API_KEY=[your-azure-ai-foundry-api-key]
+MISTRAL_SMALL_MODEL=mistral-small-2503
 
 # Performance
 AGENTIC_MAX_PARALLEL_QUERIES=5
@@ -220,6 +302,86 @@ query = "What is the Q2 revenue for Product A in the hierarchical table?"
 # El sistema debe detectar automáticamente que es una query de tabla
 ```
 
+#### Paso 4.4: Test de Integración con Mistral OCR (Azure AI Foundry)
+Verificar la integración con Mistral OCR:
+
+```python
+# Test de conectividad con Azure AI Foundry
+from shared.config import get_config
+import asyncio
+import aiohttp
+
+async def test_mistral_ocr():
+    config = get_config()
+    
+    if not config.mistral_ocr.enabled:
+        print("Mistral OCR no está habilitado")
+        return
+    
+    # Verificar endpoints configurados
+    print(f"OCR Endpoint: {config.mistral_ocr.ocr_endpoint}")
+    print(f"OCR Model: {config.mistral_ocr.ocr_model}")
+    
+    # Test de conectividad
+    headers = {
+        "Authorization": f"Bearer {config.mistral_ocr.ocr_api_key}",
+        "api-key": config.mistral_ocr.ocr_api_key,
+        "Content-Type": "application/json"
+    }
+    
+    try:
+        async with aiohttp.ClientSession() as session:
+            # Verificar endpoint
+            async with session.get(
+                f"{config.mistral_ocr.ocr_endpoint.replace('/v1/ocr', '')}/models",
+                headers=headers
+            ) as response:
+                if response.status == 200:
+                    print("Conexión exitosa con Azure AI Foundry")
+                    models = await response.json()
+                    print(f"Modelos disponibles: {models}")
+                else:
+                    print(f"Error de conexión: {response.status}")
+    except Exception as e:
+        print(f"Error: {e}")
+
+# Ejecutar test
+asyncio.run(test_mistral_ocr())
+```
+
+```python
+# Test funcional con tabla de ejemplo
+from shared.mistral_ocr_retrieval import MistralOCRTableAnalyzer
+
+async def test_table_analysis():
+    analyzer = MistralOCRTableAnalyzer()
+    
+    # Usar una imagen de tabla de prueba (base64 o URL)
+    test_table_image = "path/to/test/table.png"
+    test_query = "What is the total revenue for Q2?"
+    context = {
+        "has_hierarchical_headers": True,
+        "has_merged_cells": True,
+        "language": "Spanish"
+    }
+    
+    result = await analyzer.analyze_table_for_retrieval(
+        test_table_image,
+        test_query,
+        context
+    )
+    
+    if result:
+        print(f"Análisis semántico: {result.semantic_summary}")
+        print(f"Confianza: {result.confidence_score}")
+        print(f"Relaciones detectadas: {len(result.key_relationships)}")
+    else:
+        print("No se pudo analizar la tabla")
+
+# Ejecutar test
+asyncio.run(test_table_analysis())
+```
+
 ### Fase 5: Monitoreo y Optimización
 
 #### Paso 5.1: Habilitar Métricas
@@ -261,10 +423,12 @@ Basándose en las métricas, ajustar:
 - Requiere Azure AI Search
 - Máxima precisión, mayor latencia
 
-### Modo Hybrid
+### Modo Hybrid con Mistral OCR (MÁXIMA PRECISIÓN)
 - Combina enhanced y agentic según la query
+- Integración con Mistral OCR via Azure AI Foundry
+- Comprensión semántica profunda de tablas
 - Optimización automática
-- Mejor balance general
+- Mejor balance general con análisis multimodal
 
 ## Troubleshooting
 
@@ -282,6 +446,26 @@ Basándose en las métricas, ajustar:
 
 ### Problema: Headers jerárquicos no detectados
 **Solución**: Verificar que `ENABLE_HIERARCHICAL_HEADERS=true`
+
+### Problema: "Mistral OCR enabled but Azure AI Foundry endpoints not configured"
+**Solución**: 
+1. Verificar que las variables de entorno estén configuradas:
+   - `AZURE_MISTRAL_OCR_ENDPOINT`
+   - `AZURE_MISTRAL_OCR_API_KEY`
+2. Confirmar que el modelo esté desplegado en Azure AI Foundry
+3. Validar formato del endpoint: `https://[resource].openai.azure.com/v1/ocr`
+
+### Problema: Error 401 al llamar a Mistral OCR
+**Solución**:
+1. Verificar que la API key sea válida
+2. Confirmar que el header incluye tanto `Authorization` como `api-key`
+3. Verificar permisos del recurso en Azure Portal
+
+### Problema: Error 404 en endpoint de Mistral
+**Solución**:
+1. Verificar que el modelo esté correctamente desplegado
+2. Confirmar la URL del endpoint (debe terminar en `/v1/ocr` para OCR)
+3. Verificar el nombre del modelo: `mistral-ocr-2503`
 
 ## Rollback
 

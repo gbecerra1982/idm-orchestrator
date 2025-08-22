@@ -58,10 +58,18 @@ class DocumentIntelligenceConfig:
 
 @dataclass
 class MistralOCRConfig:
-    """Configuration for Mistral OCR integration."""
-    api_key: Optional[str] = None
-    endpoint: str = "https://api.mistral.ai/v1/chat/completions"
-    model: str = "pixtral-12b-2024-09-01"
+    """Configuration for Mistral OCR integration with Azure AI Foundry."""
+    # Azure AI Foundry OCR endpoint
+    ocr_endpoint: Optional[str] = None
+    ocr_api_key: Optional[str] = None
+    ocr_model: str = "mistral-ocr-2503"
+    
+    # Optional: Azure AI Foundry small language model endpoint
+    small_endpoint: Optional[str] = None
+    small_api_key: Optional[str] = None
+    small_model: str = "mistral-small-2503"
+    
+    # General settings
     enabled: bool = False
     max_concurrent_requests: int = 3
     timeout_seconds: int = 30
@@ -148,11 +156,19 @@ class ComplexTableConfig:
         )
     
     def _load_mistral_ocr_config(self) -> MistralOCRConfig:
-        """Load Mistral OCR configuration."""
+        """Load Mistral OCR configuration for Azure AI Foundry."""
         return MistralOCRConfig(
-            api_key=os.getenv("MISTRAL_API_KEY"),
-            endpoint=os.getenv("MISTRAL_ENDPOINT", "https://api.mistral.ai/v1/chat/completions"),
-            model=os.getenv("MISTRAL_MODEL", "pixtral-12b-2024-09-01"),
+            # Azure AI Foundry OCR endpoint
+            ocr_endpoint=os.getenv("AZURE_MISTRAL_OCR_ENDPOINT"),
+            ocr_api_key=os.getenv("AZURE_MISTRAL_OCR_API_KEY"),
+            ocr_model=os.getenv("MISTRAL_OCR_MODEL", "mistral-ocr-2503"),
+            
+            # Optional: Azure AI Foundry small language model endpoint
+            small_endpoint=os.getenv("AZURE_MISTRAL_SMALL_ENDPOINT"),
+            small_api_key=os.getenv("AZURE_MISTRAL_SMALL_API_KEY"),
+            small_model=os.getenv("MISTRAL_SMALL_MODEL", "mistral-small-2503"),
+            
+            # General settings
             enabled=self._get_bool_env("ENABLE_MISTRAL_OCR", False),
             max_concurrent_requests=int(os.getenv("MISTRAL_MAX_CONCURRENT", "3")),
             timeout_seconds=int(os.getenv("MISTRAL_TIMEOUT", "30")),

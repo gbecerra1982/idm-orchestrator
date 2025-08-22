@@ -1,6 +1,6 @@
 # Orchestrator IDM - Enhanced Complex Table Retrieval
 
-## 🚀 Nueva Funcionalidad: Retrieval Optimizado para Tablas Complejas con IA Multimodal
+## Nueva Funcionalidad: Retrieval Optimizado para Tablas Complejas con IA Multimodal
 
 Este repositorio ahora incluye capacidades avanzadas para el procesamiento y retrieval de tablas complejas con:
 - **Headers Jerárquicos Multi-nivel**
@@ -8,9 +8,9 @@ Este repositorio ahora incluye capacidades avanzadas para el procesamiento y ret
 - **Tablas sin Bordes**
 - **Búsqueda Agéntica Paralela**
 - **Métricas de Performance en Tiempo Real**
-- **🆕 Mistral OCR (Pixtral) - Comprensión Semántica Profunda con IA Multimodal**
+- **Mistral OCR (Pixtral) - Comprensión Semántica Profunda con IA Multimodal**
 
-## 📋 Tabla de Contenidos
+## Tabla de Contenidos
 
 1. [Descripción General](#descripción-general)
 2. [Nuevas Características](#nuevas-características)
@@ -29,7 +29,7 @@ Este repositorio ahora incluye capacidades avanzadas para el procesamiento y ret
 
 El Orchestrator IDM es un sistema de retrieval avanzado que ahora incluye capacidades especializadas para procesar y recuperar información de tablas complejas. Esta mejora es crucial para documentos empresariales que contienen tablas financieras, reportes con headers jerárquicos, y datos estructurados complejos.
 
-### 🎯 La Solución Robusta: Integración con Mistral OCR
+### La Solución Robusta: Integración con Mistral OCR
 
 Nuestra implementación no solo extrae la estructura de las tablas, sino que también **comprende su significado semántico** gracias a la integración con **Mistral OCR (Pixtral)**. Esta IA multimodal procesa hasta 2000 páginas por minuto con 96.12% de precisión, detectando relaciones implícitas y patrones ocultos que el OCR tradicional no puede identificar.
 
@@ -49,32 +49,32 @@ Las tablas complejas representan un desafío significativo en sistemas RAG tradi
 
 ## Nuevas Características
 
-### 🎯 Procesamiento de Headers Jerárquicos
+### Procesamiento de Headers Jerárquicos
 - Detección automática de headers multi-nivel
 - Preservación de relaciones padre-hijo
 - Mapeo completo de jerarquías
 
-### 🔄 Manejo de Celdas Fusionadas
+### Manejo de Celdas Fusionadas
 - Identificación de spans horizontales y verticales
 - Propagación correcta de valores
 - Interpretación contextual
 
-### 📊 Detección de Tablas sin Bordes
+### Detección de Tablas sin Bordes
 - Inferencia de estructura por espaciado
 - Detección de patrones de alineación
 - Reconstrucción de límites implícitos
 
-### ⚡ Búsqueda Agéntica
+### Búsqueda Agéntica
 - Descomposición de queries complejas
 - Ejecución paralela de sub-queries
 - Re-ranking inteligente de resultados
 
-### 📈 Métricas en Tiempo Real
+### Métricas en Tiempo Real
 - Tracking de performance por tipo de tabla
 - Análisis de calidad de retrieval
 - Recomendaciones automáticas de optimización
 
-### 🤖 Mistral OCR Integration (Pixtral) - DIFERENCIADOR CLAVE
+### Mistral OCR Integration (Pixtral) - DIFERENCIADOR CLAVE
 - **Análisis Multimodal**: Comprende tablas visualmente como un humano
 - **Detección de Relaciones Implícitas**: Identifica patrones y conexiones ocultas
 - **Re-ranking Semántico**: Ordena resultados por relevancia real del contenido
@@ -245,15 +245,26 @@ ENABLE_DOCUMENT_INTELLIGENCE=false
 AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT=https://[your-service].cognitiveservices.azure.com
 AZURE_DOCUMENT_INTELLIGENCE_KEY=[your-api-key]
 
-# === MISTRAL OCR (Pixtral) - RECOMENDADO ===
+# === MISTRAL OCR (Azure AI Foundry) - RECOMENDADO ===
 # IA Multimodal para comprensión semántica profunda
+# Configuración según documentación oficial de Microsoft Azure AI Foundry
 ENABLE_MISTRAL_OCR=true  # Habilitar para tablas complejas
-MISTRAL_API_KEY=[your-mistral-api-key]
-MISTRAL_MODEL=pixtral-12b-2024-09-01
+
+# Endpoints de Azure AI Foundry para Mistral
+AZURE_MISTRAL_OCR_ENDPOINT=https://[your-resource].openai.azure.com/v1/ocr
+AZURE_MISTRAL_OCR_API_KEY=[your-azure-ai-foundry-api-key]
+
+# Modelo y configuración
+MISTRAL_OCR_MODEL=mistral-ocr-2503  # Modelo OCR de Mistral en Azure
 MISTRAL_USE_FOR_COMPLEX=true  # Usar automáticamente para tablas complejas
 MISTRAL_CONFIDENCE_THRESHOLD=0.5
 MISTRAL_MAX_CONCURRENT=3
 MISTRAL_TIMEOUT=30
+
+# Opcional: Endpoint para modelo de lenguaje pequeño (para procesamiento adicional)
+AZURE_MISTRAL_SMALL_ENDPOINT=https://[your-resource].openai.azure.com/v1/chat/completions
+AZURE_MISTRAL_SMALL_API_KEY=[your-azure-ai-foundry-api-key]
+MISTRAL_SMALL_MODEL=mistral-small-2503
 
 # === MÉTRICAS Y MONITOREO ===
 ENABLE_RETRIEVAL_METRICS=true
@@ -698,7 +709,7 @@ La integración de **Mistral OCR (Pixtral)** transforma el Orchestrator IDM en u
 
 Esta implementación representa un **salto cualitativo** en capacidades de retrieval, posicionando al sistema como líder en procesamiento inteligente de documentos empresariales complejos.
 
-### 🎯 Resultado Final
+### Resultado Final
 - **Solución integral** para tablas con headers jerárquicos, celdas fusionadas y estructuras sin bordes
 - **Comprensión semántica profunda** mediante IA multimodal
 - **Performance optimizado** con búsqueda agéntica paralela
