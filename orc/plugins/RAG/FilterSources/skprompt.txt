@@ -1,0 +1,15 @@
+## Task Goal
+The task goal is to filter the provided SOURCES based on the message HISTORY and the user QUESTION.
+ 
+## Task instructions
+You will be given a list of SOURCES. 
+You must select the top 3 SOURCES that are the most relevant in order to answer the user QUESTION. 
+Remove the not selected ones from SOURCES.
+Output is only the selected SOURCES.
+
+## Task Input:
+"QUESTION": "{{$ask}}"
+"HISTORY": "{{$history}}"
+"SOURCES": "{{$sources}}"
+ 
+## Task Output:
